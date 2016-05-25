@@ -9,11 +9,14 @@ class Kyu
 {
 
 	/**
-	 * Add message to queue.
+	 * Add message to queue or reinsert failed message back for another try
+	 * @throws MessagePermanentlyFailedException
 	 */
 	public function enqueue(IMessage $message)
 	{
-
+		if ($message->getProcessingAttemptsCounter()->getValue() === 0) {
+			throw new MessagePermanentlyFailedException($message);
+		}
 	}
 
 
@@ -23,7 +26,10 @@ class Kyu
 	 */
 	public function waitForOne() : IMessage
 	{
-
+		/** @var IMessage $retrieved */
+		$retrieved = NULL;
+		$retrieved->getProcessingAttemptsCounter()->decrement();
+		return $retrieved;
 	}
 
 

@@ -7,28 +7,25 @@ class Message implements IMessage
 {
 
 	/**
-	 * @var int <0; PHP_INT_MAX> inclusive
+	 * @var Counter
 	 */
-	protected $retriesRemaining;
+	protected $retryCounter;
+
+
+	public function __construct()
+	{
+		$this->retryCounter = new Counter(3);
+	}
 
 
 	/**
 	 * Returns how many times should this message be inserted back
 	 * into processing queue after processing failure.
-	 * Each retry must decrement this counter by calling decreaseRetriesRemaining()
+	 * Each retry must decrement this counter.
 	 */
-	public function getRetriesRemaining() : int
+	public function getProcessingAttemptsCounter() : Counter
 	{
-		return $this->retriesRemaining;
-	}
-
-
-	/**
-	 * Decrement internal retry counter to a minimum of zero.
-	 */
-	public function decreaseRetriesRemaining() : void
-	{
-		$this->retriesRemaining = max(0, $this->retriesRemaining - 1);
+		return $this->retryCounter;
 	}
 
 }

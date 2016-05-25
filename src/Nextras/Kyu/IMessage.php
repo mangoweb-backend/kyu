@@ -3,20 +3,19 @@
 namespace Nextras\Kyu;
 
 
-interface IMessage
+interface IMessage extends \Serializable
 {
 
 	/**
-	 * Returns how many times should this message be inserted back
-	 * into processing queue after processing failure.
-	 * Each retry must decrement this counter by calling decreaseRetriesRemaining()
+	 * Returns how many times should we try to process this message
+	 * until it is permanently failed.
+	 * Each retry must decrement this counter.
+	 * New messages must have this counter set to at least 1, otherwise
+	 * they would be never be processed.
 	 */
-	public function getRetriesRemaining() : int;
+	public function getProcessingAttemptsCounter() : Counter;
 
 
-	/**
-	 * Decrement internal retry counter to a minimum of zero.
-	 */
-	public function decreaseRetriesRemaining() : void;
+	public function getRetryTimeout() : \DateInterval;
 
 }
