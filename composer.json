@@ -2,6 +2,10 @@
     "name": "nextras/kyu",
     "description": "Well documented reliable redis-backed queue library",
     "type": "library",
+    "require": {
+        "php": "^7.0",
+        "ext-redis": "^2.0"
+    },
     "require-dev": {
         "nette/tester": "^1.7"
     },
@@ -12,6 +16,5 @@
             "email": "mikulas.dite@gmail.com"
         }
     ],
-    "minimum-stability": "stable",
-    "require": {}
+    "minimum-stability": "stable"
 }

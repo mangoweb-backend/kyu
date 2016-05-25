@@ -1,0 +1,5 @@
+http://antirez.com/news/88
+http://www.rediscookbook.org/implement_a_fifo_queue.html
+http://www.rediscookbook.org/get_and_delete.html
+http://redis.io/commands/rpoplpush <<<
+
