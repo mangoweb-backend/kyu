@@ -9,7 +9,9 @@ class Kyu
 {
 
 	/**
-	 * Add message to queue or reinsert failed message back for another try
+	 * Add message to queue or reinsert failed message back for another try.
+	 * If the message does not have any more remaining attempts, it throws.
+	 * @param IMessage $message
 	 * @throws MessagePermanentlyFailedException
 	 */
 	public function enqueue(IMessage $message)
@@ -17,6 +19,7 @@ class Kyu
 		if ($message->getProcessingAttemptsCounter()->getValue() === 0) {
 			throw new MessagePermanentlyFailedException($message);
 		}
+		// TODO
 	}
 
 
@@ -26,6 +29,7 @@ class Kyu
 	 */
 	public function waitForOne() : IMessage
 	{
+		// TODO
 		/** @var IMessage $retrieved */
 		$retrieved = NULL;
 		$retrieved->getProcessingAttemptsCounter()->decrement();
@@ -39,29 +43,29 @@ class Kyu
 	 */
 	public function getOneOrReturn() : IMessage
 	{
-
+		// TODO
 	}
 
 
 	/**
-	 * Insert all messages other than given interval in “processing” state back
+	 * Insert single messages older than IMessage::getProcessingDurationLimit() in “processing” state back
 	 * to the queue if they have retries remaining.
+	 * Should be called until no more messages are left and NULL is returned.
 	 * Messages without remaining retries will be move to “failed” state instead.
+	 * @throws MessagePermanentlyFailedException
 	 */
-	public function recycleFailed(DateInterval $olderThan)
+	public function recycleFailed() : IMessage
 	{
+		// TODO get single one from processing
+		if ('empty') {
+			return NULL;
+		}
 
-	}
-
-
-	/**
-	 * Immediately returns failed message (which did not succeed in getRetriesRemaining() retries).
-	 * This method should be called periodically at least to remove the messages from redis.
-	 * It should also be used to log the failed messages for further debugging and resolving issues.
-	 */
-	public function getOneFailedOrReturn() : IMessage
-	{
-
+		/** @var IMessage $failed */
+		$failed = NULL;
+		$failed->getProcessingAttemptsCounter()->decrement();
+		$this->enqueue($failed);
+		return $failed;
 	}
 
 }

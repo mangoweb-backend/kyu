@@ -2,19 +2,27 @@
 
 namespace Nextras\Kyu;
 
+use DateInterval;
 
-class Message implements IMessage
+
+abstract class Message implements IMessage
 {
 
 	/**
 	 * @var Counter
 	 */
-	protected $retryCounter;
+	protected $processingAttemptsCounter;
 
 
 	public function __construct()
 	{
-		$this->retryCounter = new Counter(3);
+		$this->processingAttemptsCounter = new Counter(3);
+	}
+
+
+	public function getProcessingDurationLimit() : DateInterval
+	{
+		return new DateInterval('PT5M');
 	}
 
 
@@ -25,7 +33,7 @@ class Message implements IMessage
 	 */
 	public function getProcessingAttemptsCounter() : Counter
 	{
-		return $this->retryCounter;
+		return $this->processingAttemptsCounter;
 	}
 
 }

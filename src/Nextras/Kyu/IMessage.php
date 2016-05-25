@@ -16,6 +16,11 @@ interface IMessage extends \Serializable
 	public function getProcessingAttemptsCounter() : Counter;
 
 
-	public function getRetryTimeout() : \DateInterval;
+	/**
+	 * Returns maximum duration the message can spend in “processing” state
+	 * until it is retried. Does not include the time waiting in the queue.
+	 * @return \DateInterval
+	 */
+	public function getProcessingDurationLimit() : \DateInterval;
 
 }
