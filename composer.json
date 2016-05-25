@@ -1,0 +1,17 @@
+{
+    "name": "nextras/kyu",
+    "description": "Well documented reliable redis-backed queue library",
+    "type": "library",
+    "require-dev": {
+        "nette/tester": "^1.7"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Mikulas Dite",
+            "email": "mikulas.dite@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {}
+}
