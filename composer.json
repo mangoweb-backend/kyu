@@ -7,7 +7,7 @@
         "ext-redis": "^2.0"
     },
     "require-dev": {
-        "ext-pthreads": "^3.0",
+        "ext-sysvsem": "^7.0",
         "nette/tester": "^1.7"
     },
     "autoload": {

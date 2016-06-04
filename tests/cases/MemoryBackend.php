@@ -25,7 +25,7 @@ class MemoryBackend implements IBackend
 	 */
 	public function __construct()
 	{
-		$this->semaphore = new Semaphore(0);
+		$this->semaphore = new Semaphore(random_int(PHP_INT_MIN, PHP_INT_MAX), 0);
 
 		$this->queue = new Threaded();
 		$this->processing = new Threaded();
