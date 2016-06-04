@@ -14,9 +14,6 @@ class Kyu
 	/** @var IBackend */
 	private $backend;
 
-	/** @var string[] class names of IMessage implementations to unserialize */
-	private $messageClasses = [];
-
 	/** @var int passed to blocking operations */
 	private $timeoutInSeconds = self::NO_TIMEOUT;
 
@@ -41,8 +38,17 @@ class Kyu
 			throw new MessagePermanentlyFailedException($message);
 		}
 
-		$sealed = new SerializedMessageStruct($message);
-		$this->backend->enqueue(serialize($sealed));
+		$this->backend->enqueue($this->channel, $message);
+	}
+
+
+	/**
+	 * = ack
+	 * TODO
+	 */
+	public function removeSuccessful(IMessage $message)
+	{
+		$this->backend->removeFromProcessing($this->channel, $message->getUniqueId());
 	}
 
 
@@ -52,7 +58,7 @@ class Kyu
 	 */
 	public function waitForOne() : IMessage
 	{
-		$raw = $this->backend->waitForOne($this->timeoutInSeconds);
+		$raw = $this->backend->waitForOne($this->channel, $this->timeoutInSeconds);
 		return $this->processRawMessage($raw);
 	}
 
@@ -64,7 +70,7 @@ class Kyu
 	 */
 	public function getOneOrNone()
 	{
-		$raw = $this->backend->getOneOrNone();
+		$raw = $this->backend->getOneOrNone($this->channel);
 		if (!$raw) {
 			return NULL;
 		}
@@ -96,6 +102,7 @@ class Kyu
 	public function recycleOneFailed() : IMessage
 	{
 		// TODO get single one from processing
+		$this->backend->recycleOne($this->channel);
 		if ('empty') {
 			return NULL;
 		}
@@ -105,15 +112,6 @@ class Kyu
 		$failed->getProcessingAttemptsCounter()->decrement();
 		$this->enqueue($failed);
 		return $failed;
-	}
-
-
-	/**
-	 * @param string $class
-	 */
-	public function registerMessageClass(string $class)
-	{
-		$this->messageClasses[] = $class;
 	}
 
 }

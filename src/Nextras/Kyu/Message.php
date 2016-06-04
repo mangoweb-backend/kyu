@@ -2,8 +2,6 @@
 
 namespace Nextras\Kyu;
 
-use DateInterval;
-
 
 abstract class Message implements IMessage
 {
@@ -13,16 +11,27 @@ abstract class Message implements IMessage
 	 */
 	protected $processingAttemptsCounter;
 
+	/**
+	 * @var string
+	 */
+	protected $id;
+
 
 	public function __construct()
 	{
 		$this->processingAttemptsCounter = new Counter(3);
+		$this->id = md5(random_bytes(16));
 	}
 
 
-	public function getProcessingDurationLimit() : DateInterval
+	/**
+	 * Returns maximum duration the message can spend in “processing” state
+	 * until it is retried. Does not include the time waiting in the queue.
+	 * @return int seconds
+	 */
+	public function getProcessingDurationLimit() : int
 	{
-		return new DateInterval('PT5M');
+		return 10;
 	}
 
 
@@ -34,6 +43,12 @@ abstract class Message implements IMessage
 	public function getProcessingAttemptsCounter() : Counter
 	{
 		return $this->processingAttemptsCounter;
+	}
+
+
+	public function getUniqueId() : string
+	{
+		return $this->id;
 	}
 
 }

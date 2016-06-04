@@ -10,6 +10,13 @@ interface IMessage
 
 	public function unserialize(string $raw);
 
+
+	/**
+	 * Unique ID for this message in a set of all possible messages.
+	 * TODO explain better
+	 */
+	public function getUniqueId() : string;
+
 	/**
 	 * Returns how many times should we try to process this message
 	 * until it is permanently failed.
@@ -23,8 +30,8 @@ interface IMessage
 	/**
 	 * Returns maximum duration the message can spend in “processing” state
 	 * until it is retried. Does not include the time waiting in the queue.
-	 * @return \DateInterval
+	 * @return int seconds
 	 */
-	public function getProcessingDurationLimit() : \DateInterval;
+	public function getProcessingDurationLimit() : int;
 
 }

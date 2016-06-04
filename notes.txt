@@ -3,3 +3,22 @@ http://www.rediscookbook.org/implement_a_fifo_queue.html
 http://www.rediscookbook.org/get_and_delete.html
 http://redis.io/commands/rpoplpush <<<
 
+http://stackoverflow.com/questions/16517439/redis-how-to-delete-all-keys-older-than-3-months
+
+https://github.com/heureka/php-rq
+https://github.com/heureka/php-rq/blob/master/src/Command/UniqueQueue/ReEnqueue.php
+	too complex
+
+http://big-elephants.com/2013-09/building-a-message-queue-using-redis-in-go/
+	does not handle failures
+
+http://redis.io/topics/notifications
+	expired notifications cannot be used because we have no guarantee the message will be handled
+
+two lists, QUEUE and PROCESSING, hashmap of inverted timeouts
+enqueue: lpush to QUEUE
+processing: rpoplpush QUEUE to PROCESSING, insert key to hashmap with TTL of timeout
+retry: foreach item in processing that does NOT have hash in hashmap, atomically move to QUEUE with decreased retry count
+
+
+problem: guarantee items are never lost AND never processed twice: this is probably not solvable

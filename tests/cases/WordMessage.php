@@ -22,7 +22,7 @@ class WordMessage extends Kyu\Message
 
 	public function serialize() : string
 	{
-		return serialize([$this->processingAttemptsCounter->getValue(), $this->word]);
+		return serialize([$this->id, $this->processingAttemptsCounter->getValue(), $this->word]);
 	}
 
 
@@ -30,8 +30,9 @@ class WordMessage extends Kyu\Message
 	{
 		$data = unserialize($serialized, ['allowed_classes' => FALSE]);
 
-		$this->processingAttemptsCounter = new Kyu\Counter($data[0]);
-		$this->word = $data[1];
+		$this->id = $data[0];
+		$this->processingAttemptsCounter = new Kyu\Counter($data[1]);
+		$this->word = $data[2];
 	}
 
 

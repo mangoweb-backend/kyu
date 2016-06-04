@@ -26,8 +26,11 @@ if ($pid !== 0) {
 	$msg = $kyu->waitForOne();
 	Assert::notSame('second', $msg->getWord(), 'queue is FIFO, should be LIFO');
 	Assert::same('first', $msg->getWord());
+	$kyu->removeSuccessful($msg);
+
 	$msg = $kyu->waitForOne();
 	Assert::same('second', $msg->getWord());
+	$kyu->removeSuccessful($msg);
 
 } else {
 	Time::blockUntil(50 * Time::ms);
