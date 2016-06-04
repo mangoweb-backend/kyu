@@ -8,7 +8,7 @@ interface IBackend
 
 	public function enqueue(string $raw);
 
-	public function waitForOne() : string;
+	public function waitForOne(int $timeoutInSeconds) : string;
 
 	/**
 	 * @return NULL|string

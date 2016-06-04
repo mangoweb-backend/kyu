@@ -6,6 +6,8 @@ namespace Nextras\Kyu;
 class Kyu
 {
 
+	const NO_TIMEOUT = 0;
+
 	/** @var string */
 	private $channel;
 
@@ -14,6 +16,9 @@ class Kyu
 
 	/** @var string[] class names of IMessage implementations to unserialize */
 	private $messageClasses = [];
+
+	/** @var int passed to blocking operations */
+	private $timeoutInSeconds = self::NO_TIMEOUT;
 
 
 	public function __construct(string $channel, IBackend $backend)
@@ -47,7 +52,7 @@ class Kyu
 	 */
 	public function waitForOne() : IMessage
 	{
-		$raw = $this->backend->waitForOne();
+		$raw = $this->backend->waitForOne($this->timeoutInSeconds);
 		return $this->processRawMessage($raw);
 	}
 
@@ -57,10 +62,10 @@ class Kyu
 	 * returns NULL.
 	 * @return NULL|IMessage
 	 */
-	public function getOneOrNone() : IMessage
+	public function getOneOrNone()
 	{
 		$raw = $this->backend->getOneOrNone();
-		if ($raw === NULL) {
+		if (!$raw) {
 			return NULL;
 		}
 		return $this->processRawMessage($raw);

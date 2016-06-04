@@ -28,9 +28,9 @@ class RedisBackend implements IBackend
 	}
 
 
-	public function waitForOne() : string
+	public function waitForOne(int $timeoutInSeconds) : string
 	{
-		return $this->redis->rpoplpush(self::QUEUE, self::PROCESSING);
+		return $this->redis->brpoplpush(self::QUEUE, self::PROCESSING, $timeoutInSeconds);
 	}
 
 
@@ -39,7 +39,7 @@ class RedisBackend implements IBackend
 	 */
 	public function getOneOrNone()
 	{
-		// TODO: Implement getOneOrNone() method.
+		return $this->redis->rpoplpush(self::QUEUE, self::PROCESSING);
 	}
 
 }
