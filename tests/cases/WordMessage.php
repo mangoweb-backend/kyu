@@ -20,26 +20,27 @@ class WordMessage extends Kyu\Message
 	}
 
 
-	/**
-	 * String representation of object
-	 * @link  http://php.net/manual/en/serializable.serialize.php
-	 * @return string the string representation of the object or null
-	 */
-	public function serialize()
+	public function serialize() : string
 	{
-		return $this->word;
+		return serialize([$this->processingAttemptsCounter->getValue(), $this->word]);
+	}
+
+
+	public function unserialize(string $serialized)
+	{
+		$data = unserialize($serialized, ['allowed_classes' => FALSE]);
+
+		$this->processingAttemptsCounter = new Kyu\Counter($data[0]);
+		$this->word = $data[1];
 	}
 
 
 	/**
-	 * Constructs the object
-	 * @link  http://php.net/manual/en/serializable.unserialize.php
-	 * @param string $serialized The string representation of the object.
-	 * @return void
+	 * @return string
 	 */
-	public function unserialize($serialized)
+	public function getWord()
 	{
-		$this->word = (string) $serialized;
+		return $this->word;
 	}
 
 }

@@ -8,14 +8,18 @@ class Kyu
 
 	/** @var string */
 	private $channel;
+
 	/** @var IBackend */
 	private $backend;
 
+	/** @var string[] class names of IMessage implementations to unserialize */
+	private $messageClasses = [];
 
-	public function __construct(string $channel, IBackend $backend = NULL)
+
+	public function __construct(string $channel, IBackend $backend)
 	{
 		$this->channel = $channel;
-		$this->backend = $backend ?? new RedisBackend;
+		$this->backend = $backend;
 	}
 
 
@@ -31,7 +35,9 @@ class Kyu
 		if ($message->getProcessingAttemptsCounter()->getValue() === 0) {
 			throw new MessagePermanentlyFailedException($message);
 		}
-		$this->backend->enqueue($message);
+
+		$sealed = new SerializedMessageStruct($message);
+		$this->backend->enqueue(serialize($sealed));
 	}
 
 
@@ -41,10 +47,8 @@ class Kyu
 	 */
 	public function waitForOne() : IMessage
 	{
-		/** @var IMessage $retrieved */
-		$retrieved = $this->backend->waitForOne();
-		$retrieved->getProcessingAttemptsCounter()->decrement();
-		return $retrieved;
+		$raw = $this->backend->waitForOne();
+		return $this->processRawMessage($raw);
 	}
 
 
@@ -55,7 +59,25 @@ class Kyu
 	 */
 	public function getOneOrNone() : IMessage
 	{
-		return $this->backend->getOneOrNone();
+		$raw = $this->backend->getOneOrNone();
+		if ($raw === NULL) {
+			return NULL;
+		}
+		return $this->processRawMessage($raw);
+	}
+
+
+	private function processRawMessage(string $raw) : IMessage
+	{
+		/** @var SerializedMessageStruct $retrieved */
+		$retrieved = unserialize($raw, [
+			'allowed_classes' => [SerializedMessageStruct::class],
+		]);
+		// TODO handle FALSE
+		$message = $retrieved->unserialize();
+
+		$message->getProcessingAttemptsCounter()->decrement();
+		return $message;
 	}
 
 
@@ -78,6 +100,15 @@ class Kyu
 		$failed->getProcessingAttemptsCounter()->decrement();
 		$this->enqueue($failed);
 		return $failed;
+	}
+
+
+	/**
+	 * @param string $class
+	 */
+	public function registerMessageClass(string $class)
+	{
+		$this->messageClasses[] = $class;
 	}
 
 }

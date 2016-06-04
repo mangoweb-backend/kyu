@@ -4,76 +4,26 @@ require __DIR__ . '/../../vendor/autoload.php';
 
 use Nextras\Kyu\IBackend;
 use Nextras\Kyu\Kyu;
+use Tester\Assert;
 
-// Timeline:
-//   0: blocking read
-//   1:                put
-//   1: unblocks
-//   1:                put
-//   2: blocking read
-//   2: unblocks
-//   2: non-blocking read
-//   3:                put
-//   3: non-blocking read
 
-$sem = new Semaphore(3);
-$sem->wait();
-$sem->wait();
-$sem->wait();
-var_dump('HERE WE ARE');
+define('KEY', __FILE__);
 
-$backend = new MemoryBackend();
+$redis = new Redis();
+$redis->connect('127.0.0.1', 6379);
 
-$writing = new WritingThread($backend);
-$reading = new ReadingThread($backend);
+$backend = new \Nextras\Kyu\RedisBackend($redis);
 
-//$writing->start();
-$reading->start();
+$kyu = new Kyu(KEY, $backend);
 
-//$writing->join();
-//$reading->join();
 
-class QueueThread extends Thread
-{
+$kyu->enqueue(new WordMessage('first'));
+$kyu->enqueue(new WordMessage('second'));
 
-	/** @var Kyu */
-	protected $k;
+/** @var WordMessage $msg */
+$msg = $kyu->waitForOne();
+Assert::same('first', $msg->getWord());
+$msg = $kyu->waitForOne();
+Assert::same('second', $msg->getWord());
 
-	public function __construct(IBackend $backend)
-	{
-		$this->k = new Kyu('test-channel', $backend);
-	}
-
-}
-
-class WritingThread extends QueueThread
-{
-
-	public function run()
-	{
-		// T=0
-		usleep(1 * 1e6);
-
-		// T=1
-		$this->k->enqueue(new WordMessage('one'));
-		usleep(1 * 1e6);
-
-		// T=2
-		$this->k->enqueue(new WordMessage('two'));
-		usleep(1 * 1e6);
-
-		// T=3
-		$this->k->enqueue(new WordMessage('three'));
-	}
-
-}
-class ReadingThread extends QueueThread
-{
-
-	public function run()
-	{
-		// T=0
-		$msg = $this->k->waitForOne();
-	}
-
-}
+$redis->close();

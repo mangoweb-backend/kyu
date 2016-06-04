@@ -3,8 +3,12 @@
 namespace Nextras\Kyu;
 
 
-interface IMessage extends \Serializable
+interface IMessage
 {
+
+	public function serialize() : string;
+
+	public function unserialize(string $raw);
 
 	/**
 	 * Returns how many times should we try to process this message

@@ -40,7 +40,7 @@ class Counter implements \Serializable
 	 * Decreases counter value by one to a minimum of 0.
 	 * If counter is already at 0, this function does nothing.
 	 */
-	public function decrement() : void
+	public function decrement()
 	{
 		$this->value = max(0, $this->value - 1);
 	}

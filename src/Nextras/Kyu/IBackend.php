@@ -6,13 +6,12 @@ namespace Nextras\Kyu;
 interface IBackend
 {
 
-	public function enqueue(IMessage $message);
+	public function enqueue(string $raw);
 
-	public function waitForOne() : IMessage;
-
+	public function waitForOne() : string;
 
 	/**
-	 * @return NULL|IMessage
+	 * @return NULL|string
 	 */
 	public function getOneOrNone();
 
