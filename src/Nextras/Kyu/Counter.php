@@ -25,8 +25,9 @@ class Counter implements \Serializable
 	/**
 	 * @param int $value <0, PHP_INT_MAX> inclusive range
 	 * @throws CounterValueOutOfRangeException
+	 * @return void
 	 */
-	public function setValue(int $value) : void
+	public function setValue(int $value)
 	{
 		if ($value < 0) {
 			throw new CounterValueOutOfRangeException($value);

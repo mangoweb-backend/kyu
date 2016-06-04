@@ -2,16 +2,28 @@
 
 namespace Nextras\Kyu;
 
-use DateInterval;
-
 
 class Kyu
 {
+
+	/** @var string */
+	private $channel;
+	/** @var IBackend */
+	private $backend;
+
+
+	public function __construct(string $channel, IBackend $backend = NULL)
+	{
+		$this->channel = $channel;
+		$this->backend = $backend ?? new RedisBackend;
+	}
+
 
 	/**
 	 * Add message to queue or reinsert failed message back for another try.
 	 * If the message does not have any more remaining attempts, it throws.
 	 * @param IMessage $message
+	 * @return void
 	 * @throws MessagePermanentlyFailedException
 	 */
 	public function enqueue(IMessage $message)
@@ -19,7 +31,7 @@ class Kyu
 		if ($message->getProcessingAttemptsCounter()->getValue() === 0) {
 			throw new MessagePermanentlyFailedException($message);
 		}
-		// TODO
+		$this->backend->enqueue($message);
 	}
 
 
@@ -29,9 +41,8 @@ class Kyu
 	 */
 	public function waitForOne() : IMessage
 	{
-		// TODO
 		/** @var IMessage $retrieved */
-		$retrieved = NULL;
+		$retrieved = $this->backend->waitForOne();
 		$retrieved->getProcessingAttemptsCounter()->decrement();
 		return $retrieved;
 	}
@@ -40,10 +51,11 @@ class Kyu
 	/**
 	 * Returns immediately. If queue was empty and no message needs processing,
 	 * returns NULL.
+	 * @return NULL|IMessage
 	 */
-	public function getOneOrReturn() : IMessage
+	public function getOneOrNone() : IMessage
 	{
-		// TODO
+		return $this->backend->getOneOrNone();
 	}
 
 
@@ -54,7 +66,7 @@ class Kyu
 	 * Messages without remaining retries will be move to “failed” state instead.
 	 * @throws MessagePermanentlyFailedException
 	 */
-	public function recycleFailed() : IMessage
+	public function recycleOneFailed() : IMessage
 	{
 		// TODO get single one from processing
 		if ('empty') {
