@@ -128,11 +128,8 @@ class RedisBackend implements IBackend
 
 	public function recycleOne(string $channel)
 	{
-		$raw = $this->runScript('recycleOne', $channel);
+		$raw = $this->runScript('recycle', $channel);
 		switch ($raw) {
-			case '':
-				// this is weird empty response??!
-				throw new \RedisException('WEIRD STUFF');
 			case -1: // processing list is empty
 			case -2: // oldest item in processing list is not timed-out yet
 				return NULL;
