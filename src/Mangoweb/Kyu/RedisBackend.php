@@ -36,8 +36,10 @@ class RedisBackend implements IBackend
 		$id = $message->getUniqueId();
 
 		// TODO transaction
-		$this->redis->set($this->getValueKey($channel, $id), $raw);
-		$this->redis->lPush($this->getQueueListKey($channel), $id);
+		$x=$this->redis->set($this->getValueKey($channel, $id), $raw);
+		var_dump($x, $this->redis->getLastError());
+		$y=$this->redis->lPush($this->getQueueListKey($channel), $id);
+		var_dump($y, $this->redis->getLastError());
 	}
 
 
