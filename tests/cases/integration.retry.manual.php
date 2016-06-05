@@ -2,9 +2,9 @@
 
 require __DIR__ . '/../../vendor/autoload.php';
 
-use Nextras\Kyu\Kyu;
-use Nextras\Kyu\Message;
-use Nextras\Kyu\RedisBackend;
+use Mangoweb\Kyu\Kyu;
+use Mangoweb\Kyu\Message;
+use Mangoweb\Kyu\RedisBackend;
 use Tester\Assert;
 
 define('KEY', __FILE__);
@@ -35,6 +35,6 @@ Assert::same(0, $msg->getProcessingAttemptsCounter());
 
 //Assert::exception(function() use ($kyu, $msg) {
 //	$kyu->enqueue($msg);
-//}, \Nextras\Kyu\MessagePermanentlyFailedException::class);
+//}, \Mangoweb\Kyu\MessagePermanentlyFailedException::class);
 
 Assert::null($kyu->getOneOrNone(), 'message with depleted attemps counter should not be inserted to queue');

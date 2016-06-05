@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Nextras;
+namespace Tests\Mangoweb;
 
 
 class Time

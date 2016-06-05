@@ -2,11 +2,11 @@
 
 require __DIR__ . '/../../vendor/autoload.php';
 
-use Nextras\Kyu\Kyu;
-use Nextras\Kyu\Message;
-use Nextras\Kyu\RedisBackend;
+use Mangoweb\Kyu\Kyu;
+use Mangoweb\Kyu\Message;
+use Mangoweb\Kyu\RedisBackend;
 use Tester\Assert;
-use Tests\Nextras\Time;
+use Tests\Mangoweb\Time;
 
 define('KEY', __FILE__);
 $pid = pcntl_fork();

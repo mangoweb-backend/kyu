@@ -1,5 +1,5 @@
 {
-    "name": "nextras/kyu",
+    "name": "mangoweb/kyu",
     "description": "Well documented reliable redis-backed queue library",
     "type": "library",
     "require": {
@@ -11,7 +11,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Nextras\\Kyu\\": "src/"
+            "Mangoweb\\Kyu\\": "src/"
         }
     },
     "autoload-dev": {
@@ -23,7 +23,7 @@
     "authors": [
         {
             "name": "Mikulas Dite",
-            "email": "mikulas.dite@gmail.com"
+            "email": "mikulas@mangoweb.cz"
         }
     ],
     "minimum-stability": "stable"

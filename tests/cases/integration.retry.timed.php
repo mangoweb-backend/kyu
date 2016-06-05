@@ -2,9 +2,9 @@
 
 require __DIR__ . '/../../vendor/autoload.php';
 
-use Nextras\Kyu\Kyu;
-use Nextras\Kyu\Message;
-use Nextras\Kyu\RedisBackend;
+use Mangoweb\Kyu\Kyu;
+use Mangoweb\Kyu\Message;
+use Mangoweb\Kyu\RedisBackend;
 use Tester\Assert;
 
 define('KEY', __FILE__);

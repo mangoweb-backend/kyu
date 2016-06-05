@@ -1,6 +1,6 @@
 <?php
 
-namespace Nextras\Kyu;
+namespace Mangoweb\Kyu;
 
 use Redis;
 
