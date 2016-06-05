@@ -3,6 +3,7 @@
 require __DIR__ . '/../../vendor/autoload.php';
 
 use Nextras\Kyu\Kyu;
+use Nextras\Kyu\Message;
 use Nextras\Kyu\RedisBackend;
 use Tester\Assert;
 
@@ -15,9 +16,9 @@ $backend = new RedisBackend($redis);
 
 $kyu = new Kyu(KEY, $backend);
 
-$kyu->enqueue(new WordMessage('first'));
+$kyu->enqueue(new Message('first'));
 
-/** @var WordMessage $msg */
+/** @var Message $msg */
 $msg = $kyu->waitForOne();
 // first processing
 Assert::same(2, $msg->getProcessingAttemptsCounter()->getValue());

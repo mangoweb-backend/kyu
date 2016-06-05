@@ -20,6 +20,9 @@ class RedisBackend implements IBackend
 	/** @var Redis */
 	private $redis;
 
+	/** @var string[] [string $script => string $sha] */
+	private $scriptHashCache;
+
 
 	public function __construct(Redis $redis)
 	{
@@ -27,10 +30,9 @@ class RedisBackend implements IBackend
 	}
 
 
-	public function enqueue(string $channel, IMessage $message)
+	public function enqueue(string $channel, Message $message)
 	{
-		$sealed = new SerializedMessageStruct($message);
-		$raw = serialize($sealed);
+		$raw = $message->serializeToJson();
 		$ttl = $message->getProcessingDurationLimit();
 		$id = $message->getUniqueId();
 
@@ -68,6 +70,7 @@ class RedisBackend implements IBackend
 	public function waitForOne(string $channel, int $timeoutInSeconds) : string
 	{
 		$id = $this->redis->brpoplpush($this->getQueueListKey($channel), $this->getProcessingListKey($channel), $timeoutInSeconds);
+		var_dump('pushing to ', $this->getProcessingListKey($channel));
 		return $this->redis->get($this->getValueKey($channel, $id));
 	}
 
@@ -90,44 +93,30 @@ class RedisBackend implements IBackend
 	 * @param string $name
 	 * @return string sha1 of script
 	 */
-	private function loadScript($name)
+	private function prepareScript($name)
 	{
-		return $this->redis->script('load', __DIR__ . "/scripts/$name.lua");
+		$file = __DIR__ . "/scripts/$name.lua";
+		$sha = $this->redis->script('load', file_get_contents($file));
+		if (!$sha) {
+			throw new \RedisException($this->redis->getLastError()); // TODO our exception
+		}
+		return $sha;
+	}
+
+
+	private function runScript($name, ...$args)
+	{
+		if (!isset($this->scriptHashCache[$name])) {
+			$this->scriptHashCache[$name] = $this->prepareScript($name);
+		}
+		return $this->redis->evalSha($this->scriptHashCache[$name], $args, count($args));
 	}
 
 
 	public function recycleOne(string $channel)
 	{
-		$sha = $this->loadScript('recycleOne');
-		$this->redis->evalSha($sha);
-
-		// TODO atomicity
-
-		// peek right of LIST_PROCESSING (which is oldest)
-		// if it is alive: end
-		// otherwise decrement retries
-		// if retries remaining: move to queue
-		// otherwise discard message and throw exception
-
-		// TODO multi & watch PROCESSING
-
-		$list = $this->redis->lRange($this->getProcessingListKey($channel), 0, 0);
-		// list is empty array or array of oldest item
-		$oldestItem = array_shift($list);
-
-		// TODO should this also remove from value key? probably not
-		// because GC will or subsequent enqueue will overwrite
-
-		if ($oldestItem === NULL) {
-			return NULL;
-		}
-
-		if ($this->redis->exists($this->getAliveKey($channel, "TODO MESSAGE ID"))) {
-			return NULL;
-		}
-
-
-		// TODO exec (and retry if WATCH-triggered failure happened)
+		$raw = $this->runScript('recycleOne', $channel);
+		return $raw === '' ? NULL : $raw;
 	}
 
 

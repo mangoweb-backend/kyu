@@ -20,7 +20,7 @@ class Kyu
 
 	public function __construct(string $channel, IBackend $backend)
 	{
-		$this->channel = $channel;
+		$this->channel = md5($channel);
 		$this->backend = $backend;
 	}
 
@@ -28,11 +28,11 @@ class Kyu
 	/**
 	 * Add message to queue or reinsert failed message back for another try.
 	 * If the message does not have any more remaining attempts, it throws.
-	 * @param IMessage $message
+	 * @param Message $message
 	 * @return void
 	 * @throws MessagePermanentlyFailedException
 	 */
-	public function enqueue(IMessage $message)
+	public function enqueue(Message $message)
 	{
 		if ($message->getProcessingAttemptsCounter()->getValue() === 0) {
 			throw new MessagePermanentlyFailedException($message);
@@ -46,7 +46,7 @@ class Kyu
 	 * = ack
 	 * TODO
 	 */
-	public function removeSuccessful(IMessage $message)
+	public function removeSuccessful(Message $message)
 	{
 		$this->backend->removeFromProcessing($this->channel, $message->getUniqueId());
 	}
@@ -56,7 +56,7 @@ class Kyu
 	 * Return message immediately if bound queue is not empty,
 	 * otherwise wait forever until new message is enqueued.
 	 */
-	public function waitForOne() : IMessage
+	public function waitForOne() : Message
 	{
 		$raw = $this->backend->waitForOne($this->channel, $this->timeoutInSeconds);
 		return $this->processRawMessage($raw);
@@ -66,7 +66,7 @@ class Kyu
 	/**
 	 * Returns immediately. If queue was empty and no message needs processing,
 	 * returns NULL.
-	 * @return NULL|IMessage
+	 * @return NULL|Message
 	 */
 	public function getOneOrNone()
 	{
@@ -78,15 +78,9 @@ class Kyu
 	}
 
 
-	private function processRawMessage(string $raw) : IMessage
+	private function processRawMessage(string $rawJson) : Message
 	{
-		/** @var SerializedMessageStruct $retrieved */
-		$retrieved = unserialize($raw, [
-			'allowed_classes' => [SerializedMessageStruct::class],
-		]);
-		// TODO handle FALSE
-		$message = $retrieved->unserialize();
-
+		$message = Message::unserializeFromJson($rawJson);
 		$message->getProcessingAttemptsCounter()->decrement();
 		return $message;
 	}
@@ -97,21 +91,18 @@ class Kyu
 	 * to the queue if they have retries remaining.
 	 * Should be called until no more messages are left and NULL is returned.
 	 * Messages without remaining retries will be move to “failed” state instead.
-	 * @throws MessagePermanentlyFailedException
+	 * @return NULL|Message
 	 */
-	public function recycleOneFailed() : IMessage
+	public function recycleOneFailed()
 	{
-		// TODO get single one from processing
-		$this->backend->recycleOne($this->channel);
-		if ('empty') {
+		$raw = $this->backend->recycleOne($this->channel);
+		if ($raw === NULL) {
 			return NULL;
 		}
 
-		/** @var IMessage $failed */
-		$failed = NULL;
-		$failed->getProcessingAttemptsCounter()->decrement();
-		$this->enqueue($failed);
-		return $failed;
+		$message = Message::unserializeFromJson($raw);
+		$message->getProcessingAttemptsCounter()->decrement();
+		return $message;
 	}
 
 }

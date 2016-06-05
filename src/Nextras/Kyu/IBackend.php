@@ -6,7 +6,7 @@ namespace Nextras\Kyu;
 interface IBackend
 {
 
-	public function enqueue(string $channel, IMessage $message);
+	public function enqueue(string $channel, Message $message);
 
 	public function waitForOne(string $channel, int $timeoutInSeconds) : string;
 

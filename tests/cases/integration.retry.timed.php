@@ -2,7 +2,9 @@
 
 require __DIR__ . '/../../vendor/autoload.php';
 
+use Nextras\Kyu\Counter;
 use Nextras\Kyu\Kyu;
+use Nextras\Kyu\Message;
 use Nextras\Kyu\RedisBackend;
 use Tester\Assert;
 
@@ -15,25 +17,32 @@ $backend = new RedisBackend($redis);
 
 $kyu = new Kyu(KEY, $backend);
 
-$kyu->enqueue(new WordMessage('first'));
+$original = new Message('first', 1, new Counter(2));
+$kyu->enqueue($original);
 
-/** @var WordMessage $msg */
-$msg = $kyu->waitForOne();
-// first processing
-Assert::same(2, $msg->getProcessingAttemptsCounter()->getValue());
-$kyu->enqueue($msg);
+/** @var Message $received1 */
+$received1 = $kyu->waitForOne();
+Assert::notSame(NULL, $received1);
+Assert::same($original->getUniqueId(), $received1->getUniqueId());
 
-$msg = $kyu->waitForOne();
-// second processing
-Assert::same(1, $msg->getProcessingAttemptsCounter()->getValue());
-$kyu->enqueue($msg);
+// simulate processing duration timeout
+usleep(($received1->getProcessingDurationLimit() + 0.1) * 1e6);
 
-$msg = $kyu->waitForOne();
-// third processing
-Assert::same(0, $msg->getProcessingAttemptsCounter()->getValue());
+$failed1 = $kyu->recycleOneFailed();
+Assert::same($original->getUniqueId(), $failed1->getUniqueId());
+Assert::same(1, $failed1->getProcessingAttemptsCounter()->getValue());
+Assert::false($failed1->isFailedPermanently());
 
-Assert::exception(function() use ($kyu, $msg) {
-	$kyu->enqueue($msg);
-}, \Nextras\Kyu\MessagePermanentlyFailedException::class);
+$received2 = $kyu->waitForOne();
+Assert::notSame(NULL, $received1);
+Assert::same($original->getUniqueId(), $received2->getUniqueId());
 
-Assert::null($kyu->getOneOrNone(), 'message with depleted attemps counter should not be inserted to queue');
+// simulate processing duration timeout
+usleep(($received1->getProcessingDurationLimit() + 0.1) * 1e6);
+
+$failed2 = $kyu->recycleOneFailed();
+Assert::same($original->getUniqueId(), $failed1->getUniqueId());
+Assert::same(0, $failed1->getProcessingAttemptsCounter()->getValue());
+Assert::true($failed1->isFailedPermanently());
+
+Assert::null($kyu->getOneOrNone(), 'message without remaining processing attemps should not inserted back to queue');
