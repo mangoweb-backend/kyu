@@ -5,14 +5,17 @@ namespace Nextras\Kyu;
 use Redis;
 
 
+/**
+ * Redis keys:
+ *   $channel.queue => List<$msgId>
+ *   $channel.processing => List<$msgId>
+ *   $channel.alive.$msgId => no value, TTL
+ *   $channel.value.$msgId => serialized message
+ */
 class RedisBackend implements IBackend
 {
 
 	const VALUE_DOES_NOT_MATTER = '';
-
-	const LIST_QUEUE = '$channel.queue';
-	const LIST_PROCESSING = '$channel.processing';
-
 
 	/** @var Redis */
 	private $redis;
@@ -33,8 +36,20 @@ class RedisBackend implements IBackend
 
 		// TODO transaction
 		$this->redis->set($this->getValueKey($channel, $id), $raw);
-		$this->redis->lPush(self::LIST_QUEUE, $id);
+		$this->redis->lPush($this->getQueueListKey($channel), $id);
 		$this->redis->setex($this->getAliveKey($channel, $id), $ttl, self::VALUE_DOES_NOT_MATTER);
+	}
+
+
+	private function getQueueListKey(string $channel)
+	{
+		return "$channel.queue";
+	}
+
+
+	private function getProcessingListKey(string $channel)
+	{
+		return "$channel.processing";
 	}
 
 
@@ -52,7 +67,7 @@ class RedisBackend implements IBackend
 
 	public function waitForOne(string $channel, int $timeoutInSeconds) : string
 	{
-		$id = $this->redis->brpoplpush(self::LIST_QUEUE, self::LIST_PROCESSING, $timeoutInSeconds);
+		$id = $this->redis->brpoplpush($this->getQueueListKey($channel), $this->getProcessingListKey($channel), $timeoutInSeconds);
 		return $this->redis->get($this->getValueKey($channel, $id));
 	}
 
@@ -63,7 +78,7 @@ class RedisBackend implements IBackend
 	 */
 	public function getOneOrNone(string $channel)
 	{
-		$id = $this->redis->rpoplpush(self::LIST_QUEUE, self::LIST_PROCESSING);
+		$id = $this->redis->rpoplpush($this->getQueueListKey($channel), $this->getProcessingListKey($channel));
 		if (!$id) {
 			return NULL;
 		}
@@ -71,8 +86,21 @@ class RedisBackend implements IBackend
 	}
 
 
+	/**
+	 * @param string $name
+	 * @return string sha1 of script
+	 */
+	private function loadScript($name)
+	{
+		return $this->redis->script('load', __DIR__ . "/scripts/$name.lua");
+	}
+
+
 	public function recycleOne(string $channel)
 	{
+		$sha = $this->loadScript('recycleOne');
+		$this->redis->evalSha($sha);
+
 		// TODO atomicity
 
 		// peek right of LIST_PROCESSING (which is oldest)
@@ -83,7 +111,7 @@ class RedisBackend implements IBackend
 
 		// TODO multi & watch PROCESSING
 
-		$list = $this->redis->lRange(self::LIST_PROCESSING, 0, 0);
+		$list = $this->redis->lRange($this->getProcessingListKey($channel), 0, 0);
 		// list is empty array or array of oldest item
 		$oldestItem = array_shift($list);
 
@@ -94,7 +122,7 @@ class RedisBackend implements IBackend
 			return NULL;
 		}
 
-		if ($this->redis->exists("$channel.alive.TODO-unique-message-id")) {
+		if ($this->redis->exists($this->getAliveKey($channel, "TODO MESSAGE ID"))) {
 			return NULL;
 		}
 
@@ -112,7 +140,7 @@ class RedisBackend implements IBackend
 		// intentionally removing value first, if this request fails
 		// we will delete from processing list in next run
 		$this->redis->delete($this->getValueKey($channel, $uniqueId));
-		$this->redis->lRemove(self::LIST_PROCESSING, $uniqueId, $count);
+		$this->redis->lRemove($this->getProcessingListKey($channel), $uniqueId, $count);
 	}
 
 }
