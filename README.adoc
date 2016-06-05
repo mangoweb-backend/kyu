@@ -1,0 +1,31 @@
+:backslash: &#92;
+:toc: macro
+:!toc-title:
+:source-language: php
+
+[float]
+Kyu
+===
+
+image:https://travis-ci.org/mangoweb-backend/kyu.svg?branch=master["Build Status", link="https://travis-ci.org/mangoweb-backend/kyu"]
+image:https://img.shields.io/badge/api-doc-ff69b4.svg[Api Documentation,link=https://codedoc.pub/mangoweb-backend/kyu/]
+
+WIP Well documented reliable redis-backed queue library.
+
+toc::[]
+
+== Design priorities
+
+In descending order of importance:
+
+. Documentation. While the API is designed to be intuitive, everything from usage to  edge cases is documented.
+. Stability. This implements a __reliable queue__. Messages are atomically moved from lists and timed-out messages are periodically reinserted up to a specified number of retries. No message should ever get lost.
+. Simplicity. Functionality is kept only as complex as a single developer can comprehend at a time.
+
+== Architecture
+
+TODO document redis backend
+
+== License
+
+link:LICENSE.md[MIT license]

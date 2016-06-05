@@ -22,3 +22,5 @@ retry: foreach item in processing that does NOT have hash in hashmap, atomically
 
 
 problem: guarantee items are never lost AND never processed twice: this is probably not solvable
+
+todo persistent redis
