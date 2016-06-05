@@ -6,14 +6,15 @@ local channel = KEYS[1]
 -- get oldest message in processing list
 local messageId = redis.call('RPOP', channel .. ".processing")
 
-if messageId == nil then
+if not messageId then
     -- processing list is empty
-    return nil
+    redis.call('set', 'debug', 'return nil')
+    return -1
 end
 
 if true == redis.call('EXISTS', channel .. ".alive." .. messageId) then
     -- oldest item in processing list is not timed-out yet
-    return nil
+    return -2
 end
 
 local rawJson = redis.call('GET', channel .. ".value." .. messageId)

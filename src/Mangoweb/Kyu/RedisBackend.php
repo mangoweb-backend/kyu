@@ -99,8 +99,10 @@ class RedisBackend implements IBackend
 	private function prepareScript($name)
 	{
 		$file = __DIR__ . "/scripts/$name.lua";
+
+		$this->redis->clearLastError();
 		$sha = $this->redis->script('load', file_get_contents($file));
-		if (!$sha) {
+		if ($sha === FALSE) {
 			throw new \RedisException($this->redis->getLastError()); // TODO our exception
 		}
 		return $sha;
@@ -112,7 +114,12 @@ class RedisBackend implements IBackend
 		if (!isset($this->scriptHashCache[$name])) {
 			$this->scriptHashCache[$name] = $this->prepareScript($name);
 		}
+
+		$this->redis->clearLastError();
 		$response = $this->redis->evalSha($this->scriptHashCache[$name], $args, count($args));
+		if ($response === FALSE) {
+			throw new \RedisException($this->redis->getLastError()); // TODO our
+		}
 		return $response;
 	}
 
@@ -120,7 +127,16 @@ class RedisBackend implements IBackend
 	public function recycleOne(string $channel)
 	{
 		$raw = $this->runScript('recycleOne', $channel);
-		return $raw === '' ? NULL : $raw;
+		switch ($raw) {
+			case '':
+				// this is weird empty response??!
+				throw new \RedisException('WEIRD STUFF');
+			case -1: // processing list is empty
+			case -2: // oldest item in processing list is not timed-out yet
+				return NULL;
+			default:
+				return $raw;
+		}
 	}
 
 
