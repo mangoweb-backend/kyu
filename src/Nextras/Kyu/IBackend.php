@@ -19,4 +19,6 @@ interface IBackend
 
 	public function removeFromProcessing(string $channel, string $uniqueId);
 
+	public function startTimeout(string $channel, string $messageId, int $ttl);
+
 }

@@ -30,14 +30,9 @@ class Kyu
 	 * If the message does not have any more remaining attempts, it throws.
 	 * @param Message $message
 	 * @return void
-	 * @throws MessagePermanentlyFailedException
 	 */
 	public function enqueue(Message $message)
 	{
-		if ($message->getProcessingAttemptsCounter()->getValue() === 0) {
-			throw new MessagePermanentlyFailedException($message);
-		}
-
 		$this->backend->enqueue($this->channel, $message);
 	}
 
@@ -80,8 +75,10 @@ class Kyu
 
 	private function processRawMessage(string $rawJson) : Message
 	{
+		// TODO this should probably be atomic and scripted
 		$message = Message::unserializeFromJson($rawJson);
-		$message->getProcessingAttemptsCounter()->decrement();
+		$this->backend->startTimeout($this->channel, $message->getUniqueId(), $message->getProcessingDurationLimit());
+		$message->decrementProcessingAttemptsCounter();
 		return $message;
 	}
 
@@ -91,6 +88,11 @@ class Kyu
 	 * to the queue if they have retries remaining.
 	 * Should be called until no more messages are left and NULL is returned.
 	 * Messages without remaining retries will be move to “failed” state instead.
+	 *
+	 * Message returned must not be processed and should only be used for logging, maintenance
+	 * and similar purposes! Unless Message::isFailedPermanently(), this Message will be returned
+	 * on some subsequent call to waitForOne() or getOneOrNone().
+	 *
 	 * @return NULL|Message
 	 */
 	public function recycleOneFailed()
@@ -100,9 +102,7 @@ class Kyu
 			return NULL;
 		}
 
-		$message = Message::unserializeFromJson($raw);
-		$message->getProcessingAttemptsCounter()->decrement();
-		return $message;
+		return Message::unserializeFromJson($raw);
 	}
 
 }

@@ -33,13 +33,11 @@ class RedisBackend implements IBackend
 	public function enqueue(string $channel, Message $message)
 	{
 		$raw = $message->serializeToJson();
-		$ttl = $message->getProcessingDurationLimit();
 		$id = $message->getUniqueId();
 
 		// TODO transaction
 		$this->redis->set($this->getValueKey($channel, $id), $raw);
 		$this->redis->lPush($this->getQueueListKey($channel), $id);
-		$this->redis->setex($this->getAliveKey($channel, $id), $ttl, self::VALUE_DOES_NOT_MATTER);
 	}
 
 
@@ -70,8 +68,13 @@ class RedisBackend implements IBackend
 	public function waitForOne(string $channel, int $timeoutInSeconds) : string
 	{
 		$id = $this->redis->brpoplpush($this->getQueueListKey($channel), $this->getProcessingListKey($channel), $timeoutInSeconds);
-		var_dump('pushing to ', $this->getProcessingListKey($channel));
 		return $this->redis->get($this->getValueKey($channel, $id));
+	}
+
+
+	public function startTimeout(string $channel, string $messageId, int $ttl)
+	{
+		$this->redis->setex($this->getAliveKey($channel, $messageId), $ttl, self::VALUE_DOES_NOT_MATTER);
 	}
 
 
@@ -109,7 +112,8 @@ class RedisBackend implements IBackend
 		if (!isset($this->scriptHashCache[$name])) {
 			$this->scriptHashCache[$name] = $this->prepareScript($name);
 		}
-		return $this->redis->evalSha($this->scriptHashCache[$name], $args, count($args));
+		$response = $this->redis->evalSha($this->scriptHashCache[$name], $args, count($args));
+		return $response;
 	}
 
 

@@ -21,7 +21,7 @@ final class Message
 	protected $processingDurationLimit;
 
 	/**
-	 * @var Counter
+	 * @var int
 	 */
 	protected $processingAttemptsCounter;
 
@@ -40,15 +40,15 @@ final class Message
 	/**
 	 * @param string  $payload                 arbitrary data format
 	 * @param int     $processingDurationLimit seconds
-	 * @param Counter $processingAttemptsCounter
+	 * @param int     $processingAttemptsCounter
 	 */
-	public function __construct(string $payload, int $processingDurationLimit = NULL, Counter $processingAttemptsCounter = NULL)
+	public function __construct(string $payload, int $processingDurationLimit = NULL, int $processingAttemptsCounter = NULL)
 	{
 		assert($processingDurationLimit === NULL || $processingDurationLimit > 0);
 
 		$this->id = md5(random_bytes(16));
 		$this->processingDurationLimit = $processingDurationLimit ?? 10;
-		$this->processingAttemptsCounter = $counter ?? new Counter(3);
+		$this->processingAttemptsCounter = $processingAttemptsCounter ?? 3;
 		$this->payload = $payload;
 	}
 
@@ -64,20 +64,26 @@ final class Message
 	}
 
 
+	public function getUniqueId() : string
+	{
+		return $this->id;
+	}
+
+
 	/**
 	 * Returns how many times should this message be inserted back
 	 * into processing queue after processing failure.
 	 * Each retry must decrement this counter.
 	 */
-	public function getProcessingAttemptsCounter() : Counter
+	public function getProcessingAttemptsCounter() : int
 	{
 		return $this->processingAttemptsCounter;
 	}
 
 
-	public function getUniqueId() : string
+	public function decrementProcessingAttemptsCounter()
 	{
-		return $this->id;
+		$this->processingAttemptsCounter -= 1;
 	}
 
 
@@ -86,7 +92,7 @@ final class Message
 		return json_encode([
 			'id' => $this->id,
 			'ttl' => $this->processingDurationLimit,
-			'counter' => $this->processingAttemptsCounter->getValue(),
+			'counter' => $this->processingAttemptsCounter,
 			'payload' => $this->payload,
 		]);
 	}
@@ -101,7 +107,7 @@ final class Message
 		$instance = (new ReflectionClass(self::class))->newInstanceWithoutConstructor();
 		$instance->id = $data['id'];
 		$instance->processingDurationLimit = $data['ttl'];
-		$instance->processingAttemptsCounter = new Counter($data['counter']);
+		$instance->processingAttemptsCounter = $data['counter'];
 		$instance->payload = $data['payload'];
 		$instance->failedPermanently = $data['failed'] ?? self::NOT_AVAILABLE;
 		return $instance;
@@ -115,6 +121,15 @@ final class Message
 	public function isFailedPermanently()
 	{
 		return $this->failedPermanently;
+	}
+
+
+	/**
+	 * @return string
+	 */
+	public function getPayload()
+	{
+		return $this->payload;
 	}
 
 }

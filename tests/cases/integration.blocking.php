@@ -3,6 +3,7 @@
 require __DIR__ . '/../../vendor/autoload.php';
 
 use Nextras\Kyu\Kyu;
+use Nextras\Kyu\Message;
 use Nextras\Kyu\RedisBackend;
 use Tester\Assert;
 use Tests\Nextras\Time;
@@ -19,23 +20,23 @@ $kyu = new Kyu(KEY, $backend);
 
 Time::start();
 if ($pid !== 0) {
-	/** @var WordMessage $msg */
+	/** @var Message $msg */
 	$msg = $kyu->getOneOrNone();
 	Assert::null($msg, 'getOneOrNone should not block until messages are send');
 
 	$msg = $kyu->waitForOne();
-	Assert::notSame('second', $msg->getWord(), 'queue is FIFO, should be LIFO');
-	Assert::same('first', $msg->getWord());
+	Assert::notSame('second', $msg->getPayload(), 'queue is FIFO, should be LIFO');
+	Assert::same('first', $msg->getPayload());
 	$kyu->removeSuccessful($msg);
 
 	$msg = $kyu->waitForOne();
-	Assert::same('second', $msg->getWord());
+	Assert::same('second', $msg->getPayload());
 	$kyu->removeSuccessful($msg);
 
 } else {
 	Time::blockUntil(50 * Time::ms);
-	$kyu->enqueue(new WordMessage('first'));
-	$kyu->enqueue(new WordMessage('second'));
+	$kyu->enqueue(new Message('first'));
+	$kyu->enqueue(new Message('second'));
 }
 
 $redis->close();
