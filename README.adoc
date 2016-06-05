@@ -18,9 +18,9 @@ toc::[]
 
 In descending order of importance:
 
-. Documentation. While the API is designed to be intuitive, everything from usage to  edge cases is documented.
-. Stability. This implements a __reliable queue__. Messages are atomically moved from lists and timed-out messages are periodically reinserted up to a specified number of retries. No message should ever get lost.
-. Simplicity. Functionality is kept only as complex as a single developer can comprehend at a time.
+. **Documentation.** While the API is designed to be intuitive, everything from usage to  edge cases is documented.
+. **Stability.** This implements a __reliable queue__. Messages are atomically moved from lists and timed-out messages are periodically reinserted up to a specified number of retries. No message should ever get lost.
+. **Simplicity.** Functionality is kept only as complex as a single developer can comprehend at a time.
 
 Notably, feature set is not on the list as it directly leads to violation of those three priorities.
 
@@ -43,7 +43,13 @@ $kyu->removeSuccessful($message);
 
 == Architecture
 
-TODO document redis backend
+=== Overview
+
+TODO
+
+=== Redis backend
+
+TODO
 
 == License
 

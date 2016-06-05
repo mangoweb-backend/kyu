@@ -1,0 +1,18 @@
+language: php
+
+php:
+  - 7.0
+
+services:
+  - redis-server
+
+install:
+  - pecl uninstall xdebug
+  - /usr/bin/env bash tests/ext-redis.sh
+
+before_script:
+  - composer install
+  - composer dumpautoload --classmap-authoritative
+
+script:
+  - /usr/bin/env bash tests/travis.sh
